@@ -8,7 +8,7 @@ export default class Customer {
   private _rewardPoints: number = 0;
 
   constructor(id: string, name: string) {
-    this._id = id;
+      this._id = id;
     this._name = name;
     this.validate();
   }
