@@ -1,5 +1,8 @@
 import SendEmailWhenProductIsCreatedHandler from "../../product/event/handler/send-email-when-product-is-created.handler";
+import FirstLogWhenCustomerIsCreatedHandler from "../../customer/event/handler/first-log-when-customer-is-created.handler";
+import SecondLogWhenCustomerIsCreatedHandler from "../../customer/event/handler/second-log-when-customer-is-created.handler";
 import ProductCreatedEvent from "../../product/event/product-created.event";
+import CustomerCreatedEvent from "../../customer/event/customer-created.event";
 import EventDispatcher from "./event-dispatcher";
 
 describe("Domain events tests", () => {
@@ -59,14 +62,23 @@ describe("Domain events tests", () => {
 
   it("should notify all event handlers", () => {
     const eventDispatcher = new EventDispatcher();
-    const eventHandler = new SendEmailWhenProductIsCreatedHandler();
-    const spyEventHandler = jest.spyOn(eventHandler, "handle");
+    const ProductEventHandler = new SendEmailWhenProductIsCreatedHandler();
+    const FirstCustomerEventHandler = new FirstLogWhenCustomerIsCreatedHandler();
+    const SecondCustomerEventHandler = new SecondLogWhenCustomerIsCreatedHandler();
+    const spyProductEventHandler = jest.spyOn(ProductEventHandler, "handle");
+    const spyFirstCustomerEventHandler = jest.spyOn(FirstCustomerEventHandler, "handle");
+    const spySecondCustomerEventHandler = jest.spyOn(SecondCustomerEventHandler, "handle");
 
-    eventDispatcher.register("ProductCreatedEvent", eventHandler);
+    eventDispatcher.register("ProductCreatedEvent", ProductEventHandler);
+    eventDispatcher.register("CustomerCreatedEvent", FirstCustomerEventHandler);
+    eventDispatcher.register("CustomerCreatedEvent", SecondCustomerEventHandler);
 
     expect(
       eventDispatcher.getEventHandlers["ProductCreatedEvent"][0]
-    ).toMatchObject(eventHandler);
+    ).toMatchObject(ProductEventHandler);
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"][0]
+    ).toMatchObject(FirstCustomerEventHandler);
 
     const productCreatedEvent = new ProductCreatedEvent({
       name: "Product 1",
@@ -74,9 +86,24 @@ describe("Domain events tests", () => {
       price: 10.0,
     });
 
+    const customerCreatedEvent = new CustomerCreatedEvent({
+      name: "Customer 1",
+      address: {
+        street: "Street 1",
+        number: 1,
+        zip: "11111111",
+        city: "City 1",
+      },
+      active: true,
+      rewardPoints: 0, 
+    });
+
     // Quando o notify for executado o SendEmailWhenProductIsCreatedHandler.handle() deve ser chamado
     eventDispatcher.notify(productCreatedEvent);
+    eventDispatcher.notify(customerCreatedEvent);
 
-    expect(spyEventHandler).toHaveBeenCalled();
+    expect(spyProductEventHandler).toHaveBeenCalled();
+    expect(spyFirstCustomerEventHandler).toHaveBeenCalled();
+    expect(spySecondCustomerEventHandler).toHaveBeenCalled();
   });
 });
